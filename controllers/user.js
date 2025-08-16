@@ -5,15 +5,15 @@ const User=require("../models/user.js");
 
 
 
-module.exports.renderSingupForm=(req,res)=>{
-      res.render("user/singup.ejs");
+module.exports.renderSignupForm=(req,res)=>{
+      res.render("user/signup.ejs");
 }
 
 module.exports.renderLoginForm=(req,res)=>{
       res.render("user/login.ejs");
 }
 
-module.exports.userSingup=async(req,res)=>{
+module.exports.userSignup=async(req,res)=>{
       try{
              let{username,email,password}=req.body;
        const newUsernew= User({email,username});
@@ -23,7 +23,7 @@ module.exports.userSingup=async(req,res)=>{
             if(err){
                   return next(err);
             }
-              req.flash("sucsess","Welcome to the community");
+              req.flash("success","Welcome to the community");
        res.redirect("/");
 
        });
@@ -31,7 +31,7 @@ module.exports.userSingup=async(req,res)=>{
 
       } catch(e){
             req.flash("error",e.message);
-            res.redirect("/singup");
+            res.redirect("/signup");
       }
       
 
@@ -41,7 +41,7 @@ module.exports.userSingup=async(req,res)=>{
 
 
 module.exports.login=async(req,res)=>{
-      req.flash("sucsess","Welcome back");
+      req.flash("success","Welcome back");
       let redirectUrl=res.locals.redirectUrl ||"/listings";
       res.redirect(redirectUrl);
 }
@@ -52,7 +52,7 @@ module.exports.logout=(req,res)=>{
                 return  next(err);
 
             }
-            req.flash("sucsess","you are logout");
+            req.flash("success","you are logout");
             res.redirect("/");
       })
         

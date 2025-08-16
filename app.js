@@ -37,13 +37,14 @@ const User=require("./models/user.js");
 
 // const Listing = require('./models/listing.js'); // Assuming you have a listing model defined in models/listing.js
 //const MONGO_URL='mongodb://127.0.0.1:27017/wanderlust';
-const dbUrl=process.env.ATLASDB_URL;
+const dbUrl=process.env.ATLASDB_URL || 'mongodb://127.0.0.1:27017/wanderlust';
 main()
 .then(() => {
   console.log('Connected to MongoDB');
 })
 .catch((err)=>{
       console.log('Error connecting to MongoDB', err)
+      console.log('Using local MongoDB instance as fallback');
 })
 
 
@@ -52,7 +53,8 @@ async function main() {
   await mongoose.connect(dbUrl);
 }
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views')); // Set the views directory
+app.set('views', (path.join(__dirname, 'views')));
+ // Set the views directory
 app.use(express.static(path.join(__dirname, 'public'))); // Serve static files from the
 app.use(express.urlencoded({ extended: true })); // Middleware to parse URL-encoded bodies
 app.use(methodOverride('_method')); // Middleware to support PUT and DELETE methods in forms
@@ -63,13 +65,13 @@ app.use(express.json());
 const store=MongoStore.create({
   mongoUrl:dbUrl,
   crypto:{
-     secret:process.env.SECRET,
+     secret:process.env.SECRET || 'fallback_secret',
 
   },
   touchAfter:24*3600,
 });
 
-store.on("error",()=>{
+store.on("error",(err)=>{
   console.log("ERROR in MONGO STORE",err);
 });
 
@@ -80,7 +82,7 @@ store.on("error",()=>{
 
 const sessionOptions={
   store,
-    secret:process.env.SECRET,
+    secret:process.env.SECRET || 'fallback_secret',
             resave:false,
             saveUninitialized:true,
             cookie:{
@@ -118,6 +120,14 @@ passport.deserializeUser(User.deserializeUser());
 
 
 
+app.use((req,res,next)=>{
+  res.locals.success=req.flash("success");
+  res.locals.error=req.flash("error");
+  res.locals.currUser=req.user;
+
+  next();
+})
+
 app.get('/',(req,res)=>{
     res.redirect('/listings');
 });
@@ -145,14 +155,6 @@ app.get('/',(req,res)=>{
 //   }
 
 // };
-
-app.use((req,res,next)=>{
-  res.locals.sucsess=req.flash("sucsess");
-  res.locals.error=req.flash("error");
-  res.locals.currUser=req.user;
-
-  next();
-})
 
 // app.get("/demouser",async(req,res)=>{
 //   let fakeUser=new User({
@@ -271,12 +273,12 @@ app.use("/",userRouter);
 // });
 
  //middle ware
- app.use((err,req,res,next)=>{
-  let{statusCode=500,message="Something went weong"}=err;
-  res.status(statusCode).render("error.ejs",{message});
-  
-
+app.use((err,req,res,next)=>{
+ let{statusCode=500,message="Something went wrong"}=err;
+ res.status(statusCode).render("error",{message});;
  
+
+
 })
 
 
